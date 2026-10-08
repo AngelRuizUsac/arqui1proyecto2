@@ -24,7 +24,7 @@ intrucion_recurcivo:
     cmp w14, #' '      
     b.eq mensaje
     cmp w14, #10
-    b.eq final_leer
+    b.eq final_leer_corto
 
     strb w14, [x16,x15]
     add x15,x15,#1
@@ -32,6 +32,7 @@ intrucion_recurcivo:
 mensaje:
     mov x18,x15
     mov x19,#0
+    strb wzr, [x16,x15]
     add x15,x15,#1
 mensaje_recursivo:
     ldrb w14, [x22,x15]
@@ -42,8 +43,16 @@ mensaje_recursivo:
     b.eq final_leer
     b mensaje_recursivo
 final_leer: 
-   
+   strb wzr, [x17,x19]
 
     ldp x29, x30, [sp], #16
     ret
+final_leer_corto:
+    mov x18,x15
+    strb wzr,[x16,x15]
+
+    mov x19,#0
+    strb wzr,[x17]
+    b final_leer
+
     

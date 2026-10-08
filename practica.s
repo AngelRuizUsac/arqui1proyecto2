@@ -5,8 +5,8 @@ porque aqui y no en un notion o algo parecido? buena pregunta, no hay respuesta,
 plan de 7 dias para el proyecto //antes dije 5 pero vi que no cambia
 Dia 0) leer el proyecto ---- realizado el 10/6/2026 martes by: Angel Ruiz
 Dia 1) realiazar el help ---- realizado el 10/6/2026 martes by: Angel Ruiz //esto no es de un dia pero lo pongo porque si 
-Dia 2) realizar el echo ---- reañozadp el 10/7/2026  by: Angel Ruiz//solo es compiar un mensaje, que tanto podria salir mal,salio todo mal 
-Dia 3) ralizar el clear // sigo pensando si realizar una llamada al sistema o como podria hacer algo asi 
+Dia 2) realizar el echo ---- reañozadp el 10/7/2026 miercoles  by: Angel Ruiz//solo es compiar un mensaje, que tanto podria salir mal,salio todo mal 
+Dia 3) ralizar el clear ---- realizado el 10/7/2026 miercoles  by: Angel Ruiz // sigo pensando si realizar una llamada al sistema o como podria hacer algo asi update, era una syscall 
 Dia 4) realizar el exit // ya esta hecho y reutilizado de la practica: by: el auxliar, gracias auxiliar si lee esto
 Dia 5) realizar bypass hacia llamadas del sistemas // no se como hacer esto, basicamente la idea general es ejecutar el comando literal que pide, como se podra hacer, ni idea
 Dia 6) unir todo y rezar parea que funcione
@@ -288,7 +288,7 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
         quien sabe
 
         */
-    //10-7-2026:12:00 Angel Ruiz
+    //10-7-2026:00:00 Angel Ruiz
     /*
     Finalmente encontre el error
     siempre que se envia el mensaje
@@ -298,7 +298,7 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
     el programa no estaba preparado para eos
     y crasheaba y se reiniciaba
     */
-        //10-7-2026:12:11 Angel Ruiz
+        //10-7-2026:00:11 Angel Ruiz
     /*
     Finalmente encontre el error
     v2 el error es que print mensaje cambia x1....
@@ -307,13 +307,18 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
     tengo duda que escribira el codigo anterior, volvere a cambiar x1 por probar cuando sea el momento del echo
 
     */
-    //10-7-2026:12:23 Angel Ruiz
+    //10-7-2026:00:23 Angel Ruiz
     /*
         funcionaaaaa, lee el mensaje pero por alguna razon unca termina el /N es el error deplano, aparecia un monton de numeros
     */
-    //10-7-2026:12:56 Angel Ruiz
+    //10-7-2026:00:56 Angel Ruiz
     /*
         logre, lo logre hacer, ya funciona el echo, el error no era en leer, era en interpretar, el codigo se volvia un bucle infinito, ademas no impimia el mensaje, porque me confiundi er la longitud, pero ya funcionaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    */
+    //10-7-2026:11:35 Angel Ruiz
+    /*
+        echo, help exit y clear todos terminados, falta el bypass, que parece que sera algo como el echo,
+        basicamente hay que crear otra terminal y escribir el resultado en la nueva, ademas ya elimine todo el codigo anterior de la practica no necesario, esto incluye al atol y itoa
     */
 .data
 
@@ -321,31 +326,12 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
         .ascii "OMEGA_TERMINAL>"
         msg_inicial_len = . - msg_inicial
     
-    msg_menu:
-        .ascii "Seleccione una opción"
-        msg_menu_len = . - msg_menu
-
-
-    msg_opcion:
-        .ascii "Ingrese una opción: "
-        msg_opcion_len = . - msg_opcion
-
-
-//anterior
-    msg_error:
+   
+        msg_error:
         .ascii "Opción inválida\n"
         msg_error_len = . - msg_error
 
-    msg_primer:
-        .ascii "Ingrese el primer número: "
-        msg_primer_len = . - msg_primer
-
-    msg_segundo:
-        .ascii "Ingrese el segundo número: "
-        msg_segundo_len = . - msg_segundo
-    msg_unico:
-        .ascii "Ingrese el numero: "
-        msg_unico_len = . - msg_unico
+//anterior
 
 
 
@@ -364,6 +350,8 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
         .skip 64
     mensaje_buffer:
         .skip 64
+    argumentos:
+        .skip 24
     //desconosco que hace esto, pero si funciona no lo toques 
     //ya se que son los buffers(texto) donde se vab a gyardar
     
@@ -374,20 +362,14 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
     .include "interpretar.s" // es donde se buscara si el comando coincide con los del help, en caso contrario deberia llamar a  linux y esperar su respuesta 
     //por motivos tecnicos en lavercion 1 nomas comparar el tamaño con el echo, no buscara siquiera si es un echo
     .include "leer_comando.s" //lee el comando y lo guarda    
-    .include "05_atoi.s"
-    .include "06_itoa.s" //incluir atol asi deberia incluir los otros archivos para las diferentes funciones
-    //ejemplo el help primer comando a realiar
-    .include "echo.s" //escribir el comando
-
-
-
+    .include "echo.s" //escribir el comando (un  print)
+    .include "clear.s" //siscall donde llama a la pantalla (tambien solo es un print)
+    .include "execve.s"
+    .include "fork.s"
+    .include "wait.s"
     _start: //iniciar el proceso
-        bl help
-        bl print
-        //mensaje de arriba servira para imprimir
-        // imprimir mensaje de opcion
-        ldr x1, =msg_opcion
-        mov x2, msg_opcion_len
+        ldr x1, =msg_inicial
+        mov x2, msg_inicial_len
         bl print
 
         ldr x16,=comando_buffer
@@ -399,75 +381,7 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
 
 
         bl comparar
-
-        // cargar el dato
-        ldr x1, =input_buffer // cargar el primer byte del buffer 
-        ldrb w0, [x1]            // cargo el primer bite
-    comparacion: // comparacion con las opciones del menu
-
-        cmp w0, '7' // esto solo puede comparar numeros, hay que ver la manera de comparar strings
-        beq exit
-        
-        b error
-        
-
-
-
-    read_numbers: //leer numeros  codigo antiguo reutilizar lo posible y luego eliminar
-        mov x26,x30
-        // imprimir mensaje de primer numero
-        ldr x1, =msg_primer
-        mov x2, msg_primer_len
-        bl print
-
-        bl read
-
-        ldr x21, =input_buffer
-        bl atoi    
-        mov x20, x10
-        
-        // imprimir mensaje de segundo numero
-        ldr x1, =msg_segundo
-        mov x2, msg_segundo_len
-        bl print
-
-        bl read
-
-        ldr x21, =input_buffer
-        bl atoi
-        mov x21, x10
-        mov x30,x26
-        ret
-    read_only_one_numbers: 
-        mov x26,x30
-        // imprimir mensaje de primer numero
-        ldr x1, =msg_unico
-        mov x2, msg_unico_len
-        bl print
-
-        bl read
-
-        ldr x21, =input_buffer
-        bl atoi    
-        mov x21, x10
-
-        mov x30,x26
-        ret
-    //Fin lecturas de los mensajes
-    print_result: // imprimir mensaje viejo, llamaba al atol para convertir los numeros
-        stp     x29, x30, [sp, #-16]! // guardar el puntero ver cometnario del 11:48
-        mov x0, x20
-        ldr x1, =output_buffer
-        add x1, x1, #64
-        bl itoa
-        bl print
-
-        // imprimir nueva linea
-        ldr x1, =newline
-        mov x2, #1
-        bl print
-        ldp x29, x30, [sp], #16 //cargar el puntero, ahora con este cambio ya deberia funcionar como deberia
-        ret
+        b _start
 
     read: // leer una palabra
         // read(stdin, input_buffer, 64)
