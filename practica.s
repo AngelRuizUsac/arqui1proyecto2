@@ -353,6 +353,7 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
     .balign 8
     argumentos:
         .skip 520
+
     //desconosco que hace esto, pero si funciona no lo toques 
     //ya se que son los buffers(texto) donde se vab a gyardar
     
