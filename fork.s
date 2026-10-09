@@ -1,4 +1,8 @@
-
+.data
+    msg_error_exec:
+        .ascii "No se pudo ejecutar el comando\n"
+    msg_error_exec_len = . - msg_error_exec
+.text
 fork:
     stp x29, x30, [sp, #-16]!
 
@@ -34,6 +38,10 @@ proceso_hijo:
 
     // Si execve funciona, nunca regresa.
     // Si regresa, significa que hubo un error.
+    ldr x1, =msg_error_exec
+    mov x2, #msg_error_exec_len
+    bl print
+
     mov x0, #1
     mov x8, #93
     svc #0
@@ -42,3 +50,4 @@ proceso_hijo:
 error_fork:
     ldp x29, x30, [sp], #16
     ret
+    

@@ -340,7 +340,7 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
         .ascii "\n"
 
     .bss
-
+    
     input_buffer:
         .skip 64
 
@@ -350,8 +350,9 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
         .skip 64
     mensaje_buffer:
         .skip 64
+    .balign 8
     argumentos:
-        .skip 24
+        .skip 520
     //desconosco que hace esto, pero si funciona no lo toques 
     //ya se que son los buffers(texto) donde se vab a gyardar
     
@@ -387,15 +388,16 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
         // read(stdin, input_buffer, 64)
         mov x0, #0              // stdin
         ldr x1, =input_buffer   // dirección del buffer 
-        mov x2, #64             // tamaño a leer
+        mov x2, #63             // tamaño a leer
         mov x8, #63             // syscall read
         svc #0                  // hacer la llamada al sistema
 
         // comparación
-        cmp x0, #2
-        // compara que no este vacio, creo o que no sea 0, supongo que el numero 0 significa un numero vacio
-        //update x0 uncamente contiene los bites leidos
+        cmp x0, #0
+        // compara que leyo al menos 1 bit
         b.lt error
+        ldr x1, =input_buffer
+        strb wzr, [x1, x0]       // NUEVO: terminar el texto recibido.
 
         ret
 

@@ -14,6 +14,11 @@ echo:
     mov x1,x17
     mov x2,x19 //longitud del mensaje
     bl print
+
+    ldr x1, =newline //imprimir nueva linea
+    mov x2, #1
+    bl print
+
     ldp x29, x30, [sp], #16
 
     ret

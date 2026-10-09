@@ -12,12 +12,17 @@
 
 intrucion_init:
     stp x29, x30, [sp, #-16]!
+    
+    mov x18, #0
+    mov x19, #0
+    strb wzr, [x16] //reiniciar los textos
+    strb wzr, [x17]
 
     ldr x22, =input_buffer 
 
     mov x15,#0
     ldrb w14, [x22,x15]
-
+    
 intrucion_recurcivo:
     ldrb w14, [x22,x15]
 
