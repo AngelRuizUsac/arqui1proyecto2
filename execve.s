@@ -7,6 +7,12 @@
         .skip 80
 
 .text
+/* ---------------------------------------------------------------------
+ * execve: reemplaza el proceso hijo por el comando externo (syscall 221).
+ * Usa x16 = comando. Si el comando contiene '/' se usa como ruta; si no se
+ * le antepone "/bin/". Arma argv con preparar_argumentos. Solo regresa si
+ * execve fallo. Guarda x29/x30 con STP/LDP.
+ * --------------------------------------------------------------------- */
 execve:
     stp x29, x30, [sp, #-16]!
 
@@ -40,6 +46,10 @@ ejecutar_comando:
     ret
 
 
+/* ---------------------------------------------------------------------
+ * llamar_execve: invoca la syscall execve (221).
+ * Entrada: x0 = ruta del ejecutable. argv = argumentos, envp = NULL.
+ * --------------------------------------------------------------------- */
 llamar_execve:
     // x0 = ruta del ejecutable
     ldr x1, =argumentos
@@ -49,6 +59,10 @@ llamar_execve:
     ret
 
 
+/* ---------------------------------------------------------------------
+ * construir_ruta: arma la ruta "/bin/<comando>" en ruta_buffer.
+ * Entrada: x0 = prefijo ("/bin/"), x16 = comando. Salida: x0 = ruta_buffer.
+ * --------------------------------------------------------------------- */
 construir_ruta:
     // x0 = dirección del prefijo "/bin/"
     ldr x9, =ruta_buffer
@@ -74,6 +88,11 @@ copiar_nombre:
     ret
 
 
+/* ---------------------------------------------------------------------
+ * preparar_argumentos: construye argv en 'argumentos'.
+ * argv[0] = comando (x16); las palabras del mensaje (x17) pasan a ser
+ * argv[1..n] (se les escribe NUL al final) y argv termina con NULL.
+ * --------------------------------------------------------------------- */
 preparar_argumentos:
     ldr x9, =argumentos
 

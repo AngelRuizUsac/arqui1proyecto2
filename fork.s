@@ -2,7 +2,17 @@
     msg_error_exec:
         .ascii "No se pudo ejecutar el comando\n"
     msg_error_exec_len = . - msg_error_exec
+    msg_error_fork:
+        .ascii "No se pudo crear el proceso hijo\n"
+    msg_error_fork_len = . - msg_error_fork
 .text
+/* ---------------------------------------------------------------------
+ * fork: ejecuta un comando externo en un proceso hijo.
+ * Crea el hijo con clone(SIGCHLD) (syscall 220). x0 < 0 error, x0 = 0 hijo,
+ * x0 > 0 padre (x0 = PID). El hijo llama a execve y, si esta regresa, imprime
+ * un error y termina con exit(1). El padre espera con wait.
+ * Guarda x29/x30 con STP/LDP.
+ * --------------------------------------------------------------------- */
 fork:
     stp x29, x30, [sp, #-16]!
 
@@ -48,6 +58,9 @@ proceso_hijo:
 
 
 error_fork:
+    ldr x1, =msg_error_fork
+    mov x2, #msg_error_fork_len
+    bl print
     ldp x29, x30, [sp], #16
     ret
     

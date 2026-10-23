@@ -4,6 +4,9 @@
     msg_help_len = . - msg_help
 
 .text
+/* ---------------------------------------------------------------------
+ * help: imprime la lista de comandos internos (msg_help). Guarda x29/x30.
+ * --------------------------------------------------------------------- */
 help:
     stp     x29, x30, [sp, #-16]! // guardar el puntero ver cometnario del 11:48
     ldr x1, =msg_help 

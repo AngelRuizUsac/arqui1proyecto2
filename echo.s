@@ -8,6 +8,10 @@
 // hay que conseguir de una manera la longitud y el mensaje
 
 
+/* ---------------------------------------------------------------------
+ * echo: imprime el mensaje del usuario seguido de un salto de linea.
+ * Entrada: x17 = mensaje_buffer, x19 = longitud del mensaje. Guarda x29/x30.
+ * --------------------------------------------------------------------- */
 echo:
     stp x29, x30, [sp, #-16]!
 

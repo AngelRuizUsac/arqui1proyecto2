@@ -14,6 +14,10 @@
         .ascii "\033[2J\033[H"
         clear_len = . - clear
 .text
+/* ---------------------------------------------------------------------
+ * clear_Command: limpia la pantalla enviando la secuencia ANSI ESC[2J ESC[H.
+ * Guarda x29/x30 con STP/LDP.
+ * --------------------------------------------------------------------- */
 clear_Command:
     stp     x29, x30, [sp, #-16]! // guardar el puntero ver cometnario del 11:48
     ldr x1, =clear

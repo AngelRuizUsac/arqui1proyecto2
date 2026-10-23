@@ -12,6 +12,13 @@
         .ascii "exit"
     command_exit_len = . - command_exit
 .text
+/* ---------------------------------------------------------------------
+ * comparar: despacha el comando.
+ * Entrada: x16 = comando, x18 = longitud del comando.
+ * Compara con echo, clear, help y exit (longitud y luego byte a byte).
+ * Si ninguno coincide, lo trata como comando externo (fork).
+ * Guarda x29/x30 con STP/LDP.
+ * --------------------------------------------------------------------- */
 comparar:
     stp x29, x30, [sp, #-16]!
 

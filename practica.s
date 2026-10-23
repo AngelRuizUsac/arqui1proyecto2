@@ -331,6 +331,10 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
         .ascii "Opción inválida\n"
         msg_error_len = . - msg_error
 
+    msg_largo:
+        .ascii "Error: la linea excede 62 caracteres\n"
+        msg_largo_len = . - msg_largo
+
 //anterior
 
 
@@ -350,6 +354,8 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
         .skip 64
     mensaje_buffer:
         .skip 64
+    drain_byte:
+        .skip 8
     .balign 8
     argumentos:
         .skip 520
@@ -369,6 +375,13 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
     .include "execve.s"
     .include "fork.s"
     .include "wait.s"
+/* ---------------------------------------------------------------------
+ * _start: ciclo principal del shell.
+ * Muestra el prompt, lee la linea, la separa en comando y mensaje
+ * (intrucion_init) y la despacha (comparar). Ctrl+D termina el shell; una
+ * linea vacia o demasiado larga solo vuelve a mostrar el prompt.
+ * Registros: x16 = comando_buffer, x17 = mensaje_buffer (fijos en el ciclo).
+ * --------------------------------------------------------------------- */
     _start: //iniciar el proceso
         ldr x1, =msg_inicial
         mov x2, msg_inicial_len
@@ -377,14 +390,61 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
         ldr x16,=comando_buffer
         ldr x17,=mensaje_buffer
         bl read
-            
+        cbz x0, fin_eof         // EOF (Ctrl+D): salir en lugar de ciclar para siempre
+
+        bl verificar_largo      // si la linea no cabio en el buffer devuelve -1
+        cmp x0, #0
+        b.lt _start             // linea demasiado larga: ya se aviso, nuevo prompt
 
         bl intrucion_init
-
+        cbz x18, _start         // buffer vacio (solo Enter): nuevo prompt sin ejecutar nada
 
         bl comparar
         b _start
 
+    fin_eof: // Ctrl+D: imprimir salto de linea y terminar
+        ldr x1, =newline
+        mov x2, #1
+        bl print
+        b exit
+
+    verificar_largo: // detectar linea mas larga que el buffer
+            // entrada: x0 = bytes leidos por read
+            // salida:  x0 sin cambios si la linea cabe; -1 si no cabia
+            // si no cabia: descarta el resto de la linea (hasta \n) y avisa
+        stp x29, x30, [sp, #-16]!
+        cmp x0, #63
+        b.ne verificar_ok       // leyo menos del maximo: la linea cabe
+        ldr x1, =input_buffer
+        ldrb w2, [x1, #62]
+        cmp w2, #10
+        b.eq verificar_ok       // 62 caracteres + \n exactos: valida
+    descartar_ciclo:
+        mov x0, #0              // stdin
+        ldr x1, =drain_byte
+        mov x2, #1
+        mov x8, #63             // syscall read, de 1 byte
+        svc #0
+        cmp x0, #1
+        b.ne descartar_fin      // EOF o error
+        ldr x1, =drain_byte
+        ldrb w2, [x1]
+        cmp w2, #10
+        b.ne descartar_ciclo    // seguir hasta encontrar el \n
+    descartar_fin:
+        ldr x1, =msg_largo
+        mov x2, msg_largo_len
+        bl print
+        mov x0, #-1
+    verificar_ok:
+        ldp x29, x30, [sp], #16
+        ret
+
+/* ---------------------------------------------------------------------
+ * read: lee una linea de stdin (syscall read, 63) en input_buffer.
+ * Salida: x0 = bytes leidos (0 = EOF). Termina el texto con NUL.
+ * Si la syscall falla (x0 < 0) salta a error.
+ * --------------------------------------------------------------------- */
     read: // leer una palabra
         // read(stdin, input_buffer, 64)
         mov x0, #0              // stdin
@@ -402,11 +462,18 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
 
         ret
 
+/* ---------------------------------------------------------------------
+ * exit: termina el proceso con codigo 0 (syscall exit, 93). No retorna.
+ * --------------------------------------------------------------------- */
     exit: // salir (solo llamar a la funcion)
         mov x0, #0
         mov x8, #93             // syscall exit
         svc #0
 
+/* ---------------------------------------------------------------------
+ * print: escribe en stdout (syscall write, 64).
+ * Entrada: x1 = direccion del texto, x2 = longitud. Usa x0 y x8.
+ * --------------------------------------------------------------------- */
     print: // imprimir un mensaje, nomas enviar el mensaje (desconosco donde se guarda el mensaje)
             // update el mensaje se guarda en x1 y x2 
             // x1 = msg_asunto
@@ -418,6 +485,10 @@ talves tuve que haberlo hecho en orden, posiblemente no estuviera programando a 
         svc 0
         ret
 
+/* ---------------------------------------------------------------------
+ * error: informa un error de lectura ("Opcion invalida") y regresa a _start.
+ * No retorna.
+ * --------------------------------------------------------------------- */
     error: // mostrar mensaje de error solo llamar a la funcion
         ldr x1, =msg_error
         mov x2, msg_error_len
